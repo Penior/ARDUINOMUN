@@ -27,7 +27,7 @@ void setup ()
     // rtc.adjust(DateTime(2017, 1, 27, 12, 56, 0)); 이렇게 설정하셔야합니다.
   }
 
-  rtc.adjust(DateTime());
+  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
 }
 
@@ -50,6 +50,6 @@ void loop ()
     Serial.print(rtc.getTemperature()); //온도 표시도 가능합니다.
     Serial.println('C');
 
-
+    lcd.print()
     delay(1000);
 }

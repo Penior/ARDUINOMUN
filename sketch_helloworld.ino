@@ -2,7 +2,6 @@
 #include <LiquidCrystal_I2C.h>
 #include <DS3231.h>
 #include <string.h>
-#include <time.h>
 
 
 
@@ -21,19 +20,8 @@ void lcd_setup(){
   lcd_set.print("Setup Complete!");
 }
 
-void time_setup(){ // 현재 시간 얻기 불가 
-  std::time_t currentTime = std::time(NULL);
-    std::tm* localTime = std::localtime(&currentTime);
-
-    int y = localTime->tm_year + 1900; // 년
-    int m = localTime->tm_mon + 1;    // 월 (0부터 시작하므로 1을 더함)
-    int d = localTime->tm_mday;         // 일
-    int h = localTime->tm_hour;        // 시
-    int min = localTime->tm_min;       // 분
-    int sec = localTime->tm_sec;
-  Clock.begin();
-  Clock.setTime(h, min, sec);
-  Clock.setDate(y, m, d);
+void time_setup(){
+  
 }
 
 void setup()
@@ -79,7 +67,7 @@ void resetTimeLCD(int ms){
 
 void loop()
 {
-  /*
+  
   lcd_temp.clear();
   lcd_temp.backlight();
   lcd_temp.setCursor(0,0);
@@ -87,6 +75,5 @@ void loop()
   lcd_temp.setCursor(0,1);
   lcd_temp.print("Not defined");
   delay(2000);
-*/
-  testtime(1000);
+
 }

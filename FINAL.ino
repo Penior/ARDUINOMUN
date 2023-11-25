@@ -4,6 +4,7 @@
 #include <time.h>
 #include "RTClib.h"
 #include "RX9QR.h"
+#include "Servo.h"
 
 #define PHOTO A0
 #define EMF_pin 0   // RX-9 E with A0 of arduino
@@ -20,8 +21,11 @@ float Ea;
 //CO2 calibrated number
 float cal_A = 372.1; // you can take the data from RX-9 bottom side QR data #### of first 4 digits. you type the data to cal_A as ###.#
 float cal_B = 63.27; // following 4 digits after cal_A is cal_B, type the data to cal_B as ##.##
+
+//핀
 #define FAN_PIN 32
 #define LED 23
+#define relayPin 31
 
 //CO2 Step range
 #define cr1  700      // Base_line ~ cr1
@@ -60,13 +64,16 @@ DHT dht(12, DHT11);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // 0x27는 일반적인 I2C 주소입니다. 사용하는 LCD에 따라 다를 수 있습니다.
 
 RTC_DS3231 rtc;
+Servo myServo;
 
 void setup() // 메인 코드 1 
 {
 
+  myServo.attach(9);
   Serial.begin(9600);
   pinMode(LED, OUTPUT);
   pinMode(FAN_PIN, OUTPUT);
+  pinMode(relayPin, OUTPUT);
   LCD();
   dht.begin();
 
@@ -179,6 +186,17 @@ void CO2_andSerial() {
   else if (message == "LED2") {
     digitalWrite(LED,LOW);
   }
+
+  if(message == "PumpON"){
+    digitalWrite(relayPin, HIGH);
+  }
+  else if(message == "PumpOFF") {
+    digitalWrite(relayPin, LOW);
+  }
+
+  if(message.substring(0, 3) == "Ser") {
+    myServo.write(message.substring(4).toInt());
+  }
 }
 
 void CO2() {
@@ -232,8 +250,10 @@ void CO2() {
     else{
       Serial.print("(LOADING)");
     }
+    int soil = analogRead(A1);
 
-    Serial.print(", 조도 : "); Serial.print(Ea); Serial.print("Lx, 습도 : "); Serial.print(h); Serial.print("%, 온도 : "); Serial.print(t); Serial.print("°C"); 
+    Serial.print(", 조도 : "); Serial.print(Ea); Serial.print("Lx, 습도 : "); Serial.print(h); Serial.print("%, 온도 : "); Serial.print(t); Serial.print("°C, 토양수분 : ");
+    Serial.println(soil); 
     Serial.println(""); //CR LF
     Serial.println("");
   }  

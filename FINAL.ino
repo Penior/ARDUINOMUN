@@ -1,9 +1,11 @@
 #include <LiquidCrystal_I2C.h>
+#include <DHT.h>
 #include <Wire.h>
 #include <time.h>
 #include "RTClib.h"
 #include "RX9QR.h"
 
+#define PHOTO A0
 #define EMF_pin 0   // RX-9 E with A0 of arduino
 #define THER_pin 1  // RX-9 T with A1 of arduino
 #define ADCvolt 5
@@ -44,21 +46,33 @@ unsigned int co2_step = 0;
 float EMF = 0;
 float THER = 0;
 
-RX9QR RX9(cal_A, cal_B, Base_line, meti, mein, cr1, cr2, cr3, cr4);
+int Photo_Value = 0;
+int h = 0;  // 습도 변수 추가
+int t = 0;  // 온도 변수 추가
 
+RX9QR RX9(cal_A, cal_B, Base_line, meti, mein, cr1, cr2, cr3, cr4);
+DHT dht(12, DHT11);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // 0x27는 일반적인 I2C 주소입니다. 사용하는 LCD에 따라 다를 수 있습니다.
 RTC_DS3231 rtc;
 
-void setup() {
+void setup() // 메인 코드 1 
+{
 
   Serial.begin(9600);
   LCD();
+  dht.begin();
 
 }
 
-void loop() {
+void loop() // 메인 코드 2 
+{
   LCD_setting();
   CO2();
+}
+
+void request_dht11() {
+  h = dht.readHumidity();
+  t = dht.readTemperature();
 }
 
 void LCD() {
@@ -82,6 +96,7 @@ void LCD() {
 void LCD_setting() {
 
   DateTime now = rtc.now();
+  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(now.year(), DEC);
   lcd.print('/');
@@ -97,8 +112,40 @@ void LCD_setting() {
 
   if(status_sensor) {
     lcd.print(co2_ppm, DEC);
-    lcd.print('p'); lcd.print('p'); lcd.print('m');
+    lcd.print(' '); lcd.print('p'); lcd.print('p'); lcd.print('m');
   }
+
+  request_dht11();
+  delay(3500);
+
+  Photo_Value = analogRead(PHOTO);
+  float pv_value = float(Photo_Value * 5) / 1023;
+  float Rp = (10 * pv_value) / (5 - pv_value);
+  float y = (log10(200 / Rp)) / 0.7;
+  float Ea = pow(10, y);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(" Pa=");
+  lcd.print(Photo_Value);
+
+  lcd.setCursor(0, 1);
+  lcd.print(" Lx=");
+  lcd.print(Ea);
+  delay(3500);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);  
+  lcd.print(" Humidity=");
+  lcd.print(h);
+
+  lcd.setCursor(0, 1);  
+  lcd.print(" Temperature=");
+  lcd.print(t);
+
+  delay(3500);
+
+
 
 }
 
@@ -135,11 +182,11 @@ void CO2() {
 
     if(status_sensor){
       Serial.print(co2_ppm); Serial.print(" ");
-      Serial.print("ppm"); 
+      Serial.print(" ppm"); 
       
     }
     else{
-      Serial.print("(LOADING)");
+      Serial.print(" (LOADING)");
     }
     Serial.println(""); //CR LF
   }  

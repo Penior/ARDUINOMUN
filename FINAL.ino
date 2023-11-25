@@ -24,8 +24,8 @@ float cal_B = 63.27; // following 4 digits after cal_A is cal_B, type the data t
 
 //핀
 #define FAN_PIN 32
-#define LED 23
-#define relayPin 31
+#define LED 4
+#define WATER 31
 
 //CO2 Step range
 #define cr1  700      // Base_line ~ cr1
@@ -73,10 +73,10 @@ void setup() // 메인 코드 1
   Serial.begin(9600);
   pinMode(LED, OUTPUT);
   pinMode(FAN_PIN, OUTPUT);
-  pinMode(relayPin, OUTPUT);
+  pinMode(WATER, OUTPUT);
   LCD();
   dht.begin();
-
+  myServo.write(0);
 }
 
 void loop() // 메인 코드 2 
@@ -188,10 +188,10 @@ void CO2_andSerial() {
   }
 
   if(message == "PumpON"){
-    digitalWrite(relayPin, HIGH);
+    digitalWrite(WATER, HIGH);
   }
   else if(message == "PumpOFF") {
-    digitalWrite(relayPin, LOW);
+    digitalWrite(WATER, LOW);
   }
 
   if(message.substring(0, 3) == "Ser") {

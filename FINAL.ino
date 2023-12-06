@@ -5,7 +5,6 @@
 #include "RTClib.h"
 #include "RX9QR.h"
 #include "Servo.h"
-#include <math.h>
 
 #define PHOTO A0
 #define EMF_pin 0   // RX-9 E with A0 of arduino

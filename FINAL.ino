@@ -5,6 +5,7 @@
 #include "RTClib.h"
 #include "RX9QR.h"
 #include "Servo.h"
+#include <math.h>
 
 #define PHOTO A0
 #define EMF_pin 0   // RX-9 E with A0 of arduino
@@ -43,8 +44,7 @@ float Resist_0 = 15;
 
 //Timing
 unsigned int time_s = 0;
-unsigned int time_s_prev = 0;
-unsigned int time_s_set = 1;
+unsigned int time_s_prev = 61;
 
 extern volatile unsigned long timer0_millis;
 
@@ -68,7 +68,6 @@ Servo myServo;
 
 void setup() // 메인 코드 1 
 {
-
   myServo.attach(9);
   Serial.begin(9600);
   pinMode(LED, OUTPUT);
@@ -125,6 +124,7 @@ void LCD_setting() {
   lcd.print(now.minute(), DEC);
   CO2_andSerial();
   lcd.setCursor(0, 1);
+  lcd.print("Team 1 Device 1");
 
   if(status_sensor) {
     lcd.print(co2_ppm, DEC);
@@ -156,12 +156,14 @@ void LCD_setting() {
 
   lcd.clear();
   lcd.setCursor(0, 0);  
-  lcd.print(" Humidity=");
+  lcd.print(" Humid=");
   lcd.print(h);
+  lcd.print("%");
 
   lcd.setCursor(0, 1);  
-  lcd.print(" Temperature=");
+  lcd.print(" Temp=");
   lcd.print(t);
+  lcd.print("C");
 
   CO2_andSerial();
   CO2_andSerial();
@@ -171,7 +173,6 @@ void LCD_setting() {
 
 void CO2_andSerial() {
   CO2();
-  delay(1000);
   String message = Serial.readStringUntil('\n');
   if (message == "FanON") {
     analogWrite(FAN_PIN, 255);
@@ -204,8 +205,8 @@ void CO2() {
   now = now + TimeSpan(0, 0, 2, 0); // Serial 시간 조정
 
   // put your main code here, to run repeatedly:
-  time_s = millis()/1000;
-  if(time_s - time_s_prev >= time_s_set){
+  time_s = now.second();
+  if(time_s != time_s_prev){
     time_s_prev = time_s;
     //every 1 sec
     //read EMF data from RX-9, RX-9 Simple START-->
@@ -216,25 +217,22 @@ void CO2() {
     EMF = EMF / 6;
     EMF = EMF * 1000;
     // <-- read EMF data from RX-9, RX-9 Simple END 
-
     //read THER data from RX-9, RX-9 Simple START-->
     THER = analogRead(THER_pin);
     delay(1);
     THER = 1/(C1+C2*log((Resist_0*THER)/(ADCResol-THER))+C3*pow(log((Resist_0*THER)/(ADCResol-THER)),3))-273.15;
     // <-- read THER data from RX-9, RX-9 Simple END
-    
     status_sensor = RX9.status_co2();   //read status_sensor, status_sensor = 0 means warming up, = 1 means stable
     co2_ppm = RX9.cal_co2(EMF,THER);    //calculation carbon dioxide gas concentration. 
     co2_step = RX9.step_co2();          //read steps of carbon dioixde gas concentration. you can edit the step range with cr1~cr4 above.
-
+    Serial.print("[");
     Serial.print(now.year(), DEC); Serial.print("/");
     Serial.print(now.month(), DEC); Serial.print("/");
     Serial.print(now.day(), DEC); Serial.print(" ");
     Serial.print(now.hour(), DEC); Serial.print(":");
     Serial.print(now.minute(), DEC); Serial.print(":");
     Serial.print(now.second(), DEC); Serial.print("");
-    Serial.println("");
-    
+    Serial.print("] ");
     Serial.print("CO2 : ");                //Starting letter
 
     if(status_sensor){
@@ -248,13 +246,17 @@ void CO2() {
       
     }
     else{
-      Serial.print("(LOADING)");
+      Serial.print("  -1 ppm");
     }
     int soil = analogRead(A1);
 
-    Serial.print(", 조도 : "); Serial.print(Ea); Serial.print("Lx, 습도 : "); Serial.print(h); Serial.print("%, 온도 : "); Serial.print(t); Serial.print("°C, 토양수분 : ");
-    Serial.println(soil); 
-    Serial.println(""); //CR LF
-    Serial.println("");
+    Serial.print(", Lux : ");
+    Serial.print(Ea);
+    Serial.print("Lx, humi : ");
+    Serial.print(h);
+    Serial.print("%, temp : ");
+    Serial.print(t);
+    Serial.print("*C, humi of soil : ");
+    Serial.println(soil);
   }  
 }
